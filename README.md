@@ -104,6 +104,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 - Desenvolvedor: Richard Esley / Fernanda Mey
 - GitHub: [RDEsley](https://github.com/RDEsley)
+- GitHub: [FeMeNiKi](https://github.com/FeMeNiKi)
 - Email: [richardesleyso@gmail.com](richardesleyso@gmail.com)
 
 ---
