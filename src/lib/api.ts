@@ -1,30 +1,15 @@
 import axios from 'axios';
 import { supabase } from './supabase';
+import { ApifyClient } from 'apify-client';
 
-const APIFY_API_KEY = 'apify_api_ZKJFjHDg2TwGteKs5vdRYXSQG75n8M4G9t4f';
-const APIFY_ACTOR_ID = 'nH2AHrwxeTRJoN5hX';
+const APIFY_API_TOKEN = 'apify_api_ZKJFjHDg2TwGteKs5vdRYXSQG75n8M4G9t4f';
+const ACTOR_ID = 'apify/instagram-profile-scraper';
 
-type InstagramPost = {
-  caption: string;
-  url: string;
-  id: string;
-  likesCount: number;
-  commentsCount: number;
-  timestamp: string;
-  ownerUsername: string;
-  comments?: InstagramComment[];
-};
-
-type InstagramComment = {
-  text: string;
-  ownerUsername: string;
-  likesCount: number;
-  timestamp: string;
-};
+const apifyClient = new ApifyClient({
+  token: APIFY_API_TOKEN,
+});
 
 export const validateInstagramHandle = (handle: string): boolean => {
-  // Instagram handle validation: letters, numbers, periods, and underscores
-  // Between 1-30 characters as per Instagram rules
   const regex = /^[a-zA-Z0-9_.]{1,30}$/;
   return regex.test(handle);
 };
@@ -43,7 +28,6 @@ export const fetchInstagramData = async (username: string) => {
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-    // If we have data from the last 24 hours, use that instead of making a new API call
     if (recentData && new Date(recentData.search_date) > oneDayAgo) {
       const { data: posts } = await supabase
         .from('posts')
@@ -53,65 +37,27 @@ export const fetchInstagramData = async (username: string) => {
       return { profile: recentData, posts };
     }
 
-    // Make API call to Apify
-    const response = await axios.post(
-      `https://api.apify.com/v2/acts/${APIFY_ACTOR_ID}/runs`,
-      {
-        username,
-        resultsLimit: 20, // Limit to 20 most recent posts
-        resultsType: 'posts',
-        scrapeComments: true,
-        commentsLimit: 50, // Limit to 50 comments per post
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${APIFY_API_KEY}`,
-        },
+    // Start Apify run
+    const input = {
+      usernames: [username],
+      resultsType: "posts",
+      resultsLimit: 20,
+      searchType: "user",
+      searchLimit: 1,
+      proxy: {
+        useApifyProxy: true,
+        apifyProxyGroups: ["RESIDENTIAL"]
       }
-    );
+    };
 
-    // Get the run ID
-    const runId = response.data.data.id;
+    const run = await apifyClient.actor(ACTOR_ID).call(input);
+    const { items: results } = await apifyClient.dataset(run.defaultDatasetId).listItems();
     
-    // Poll for results (in a real app, you might want to use webhooks instead)
-    let status = 'RUNNING';
-    let result = null;
-    
-    while (status === 'RUNNING' || status === 'CREATED') {
-      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-      
-      const statusResponse = await axios.get(
-        `https://api.apify.com/v2/actor-runs/${runId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${APIFY_API_KEY}`,
-          },
-        }
-      );
-      
-      status = statusResponse.data.data.status;
-      
-      if (status === 'SUCCEEDED') {
-        const resultResponse = await axios.get(
-          `https://api.apify.com/v2/actor-runs/${runId}/dataset/items`,
-          {
-            headers: {
-              'Authorization': `Bearer ${APIFY_API_KEY}`,
-            },
-          }
-        );
-        
-        result = resultResponse.data;
-        break;
-      } else if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED_OUT') {
-        throw new Error(`Apify run failed with status: ${status}`);
-      }
-    }
-    
-    if (!result || result.length === 0) {
+    if (!results || results.length === 0) {
       throw new Error('No results returned from Apify');
     }
+
+    const profileData = results[0];
 
     // Get user data
     const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -127,6 +73,13 @@ export const fetchInstagramData = async (username: string) => {
         user_id: userData.user.id,
         instagram_username: username,
         search_date: new Date().toISOString(),
+        followers_count: profileData.followersCount || 0,
+        following_count: profileData.followingCount || 0,
+        posts_count: profileData.postsCount || 0,
+        is_private: profileData.private || false,
+        is_verified: profileData.verified || false,
+        profile_pic_url: profileData.profilePicUrl || '',
+        biography: profileData.bio || ''
       })
       .select()
       .single();
@@ -136,20 +89,21 @@ export const fetchInstagramData = async (username: string) => {
     }
 
     // Process and save posts
-    const posts: InstagramPost[] = result;
+    const posts = profileData.latestPosts || [];
+    const savedPosts = [];
     
     for (const post of posts) {
-      // Save post to database
       const { data: savedPost, error: postError } = await supabase
         .from('posts')
         .insert({
           profile_id: profile.id,
           caption: post.caption || '',
-          post_url: post.url,
+          post_url: post.url || '',
           instagram_post_id: post.id,
           likes_count: post.likesCount || 0,
           comments_count: post.commentsCount || 0,
           post_date: post.timestamp ? new Date(post.timestamp).toISOString() : new Date().toISOString(),
+          image_url: post.imageUrl || ''
         })
         .select()
         .single();
@@ -158,6 +112,8 @@ export const fetchInstagramData = async (username: string) => {
         console.error('Failed to save post:', postError);
         continue;
       }
+
+      savedPosts.push(savedPost);
 
       // Save comments if they exist
       if (post.comments && post.comments.length > 0) {
@@ -177,16 +133,6 @@ export const fetchInstagramData = async (username: string) => {
           console.error('Failed to save comments:', commentsError);
         }
       }
-    }
-
-    // Return the saved data
-    const { data: savedPosts, error: fetchError } = await supabase
-      .from('posts')
-      .select('*, comments(*)')
-      .eq('profile_id', profile.id);
-
-    if (fetchError) {
-      throw new Error('Failed to fetch saved data');
     }
 
     return { profile, posts: savedPosts };
@@ -250,9 +196,6 @@ export const getProfileData = async (profileId: string) => {
 };
 
 export const analyzeComments = (comments: any[]) => {
-  // This is a simple analysis function
-  // In a production app, you might want to use sentiment analysis libraries
-  // or machine learning models for more sophisticated analysis
   const totalComments = comments.length;
   
   if (totalComments === 0) {
@@ -264,11 +207,9 @@ export const analyzeComments = (comments: any[]) => {
     };
   }
 
-  // Calculate average likes
   const totalLikes = comments.reduce((sum, comment) => sum + (comment.likes || 0), 0);
   const averageLikes = totalLikes / totalComments;
 
-  // Get top commenters
   const authorCount: Record<string, number> = {};
   comments.forEach(comment => {
     const author = comment.author || 'anonymous';
@@ -280,11 +221,10 @@ export const analyzeComments = (comments: any[]) => {
     .slice(0, 5)
     .map(([author, count]) => ({ author, count }));
 
-  // Analyze comment lengths
   const commentLengthDistribution = {
-    short: 0, // 0-50 characters
-    medium: 0, // 51-200 characters
-    long: 0, // 201+ characters
+    short: 0,
+    medium: 0,
+    long: 0,
   };
 
   comments.forEach(comment => {
