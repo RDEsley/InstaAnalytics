@@ -53,10 +53,10 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
   
   // Get engagement rating label
   const getEngagementRating = (rate: number) => {
-    if (rate < 1) return 'Low';
-    if (rate < 3) return 'Average';
-    if (rate < 6) return 'Good';
-    return 'Excellent';
+    if (rate < 1) return 'Baixo';
+    if (rate < 3) return 'Médio';
+    if (rate < 6) return 'Bom';
+    return 'Excelente';
   };
   
   // Animation variants
@@ -123,7 +123,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                Followers
+                Seguidores
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
@@ -137,7 +137,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-1">
                 <UserPlus className="h-4 w-4" />
-                Following
+                Seguindo
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
@@ -165,7 +165,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-1">
                 <TrendingUp className="h-4 w-4" />
-                Engagement
+                Engajamento
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
@@ -189,7 +189,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
           onClick={() => setTab('engagement')}
           className="rounded-none rounded-t-lg"
         >
-          Engagement
+          Engajamento
         </Button>
       </div>
       
@@ -206,8 +206,8 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
             {engagementMetrics.bestPerformingPost && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Best Performing Post</CardTitle>
-                  <CardDescription>Post with highest engagement</CardDescription>
+                  <CardTitle className="text-lg">Melhor Performance Post</CardTitle>
+                  <CardDescription>Post com maior engajamento</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex flex-col sm:flex-row gap-4">
@@ -252,7 +252,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                     className="w-full" 
                     onClick={() => window.open(engagementMetrics.bestPerformingPost?.url, '_blank')}
                   >
-                    View on Instagram
+                    Visualizar no Instagram
                     <ArrowUpRight className="ml-2 h-4 w-4" />
                   </Button>
                 </CardFooter>
@@ -262,8 +262,8 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
             {/* Recent Posts */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Recent Posts</CardTitle>
-                <CardDescription>Most recent content performance</CardDescription>
+                <CardTitle className="text-lg">Posts Recentes</CardTitle>
+                <CardDescription>Desempenho de conteúdo mais recente</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] w-full">
@@ -299,8 +299,8 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
             {/* Engagement Metrics */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Engagement Analysis</CardTitle>
-                <CardDescription>Key metrics about audience interaction</CardDescription>
+                <CardTitle className="text-lg">Análises de Engajamento</CardTitle>
+                <CardDescription>Métricas principais sobre interação do público</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Engagement Rate */}
@@ -308,7 +308,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                   <div className="flex justify-between">
                     <h3 className="font-medium flex items-center gap-2">
                       <BarChart3 className="h-4 w-4 text-pink-500" />
-                      Engagement Rate
+                      Nível de engajamento
                     </h3>
                     <span className="text-sm font-bold">{engagementMetrics.engagementRate.toFixed(2)}%</span>
                   </div>
@@ -319,7 +319,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                     ></div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Rating: <span className="font-medium">{getEngagementRating(engagementMetrics.engagementRate)}</span>
+                    Avaliação: <span className="font-medium">{getEngagementRating(engagementMetrics.engagementRate)}</span>
                   </p>
                 </div>
                 
@@ -330,7 +330,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Heart className="h-4 w-4" />
-                      Avg. Likes per Post
+                      Média de Likes por Post
                     </p>
                     <p className="text-2xl font-semibold">{Math.round(engagementMetrics.averageLikes).toLocaleString()}</p>
                   </div>
@@ -338,7 +338,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <MessageCircle className="h-4 w-4" />
-                      Avg. Comments per Post
+                      Média de Comentários por Post
                     </p>
                     <p className="text-2xl font-semibold">{Math.round(engagementMetrics.averageComments).toLocaleString()}</p>
                   </div>
@@ -346,7 +346,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      Posting Frequency
+                      Frequência de Posts
                     </p>
                     <p className="text-2xl font-semibold">{engagementMetrics.postingFrequency.toFixed(1)}<span className="text-sm text-muted-foreground ml-1">posts/month</span></p>
                   </div>
@@ -354,7 +354,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Users className="h-4 w-4" />
-                      Follower-Following Ratio
+                      Proporção de Seguidores-Seguidores
                     </p>
                     <p className="text-2xl font-semibold">
                       {profile.followingCount > 0 
@@ -371,10 +371,10 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
       
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
-          Analysis performed on {formattedTimestamp}
+          Análise realizada em {formattedTimestamp}
         </p>
         <Button variant="outline" onClick={onReset}>
-          Analyze Another Profile
+          Analise outro Perfil
         </Button>
       </div>
     </motion.div>

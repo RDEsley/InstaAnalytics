@@ -85,7 +85,7 @@ const PaginationNext = ({
     className={cn('gap-1 pr-2.5', className)}
     {...props}
   >
-    <span>Next</span>
+    <span>Próximo</span>
     <ChevronRight className="h-4 w-4" />
   </PaginationLink>
 );
@@ -101,7 +101,7 @@ const PaginationEllipsis = ({
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">More pages</span>
+    <span className="sr-only">Mais Páginas</span>
   </span>
 );
 PaginationEllipsis.displayName = 'PaginationEllipsis';

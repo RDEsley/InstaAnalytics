@@ -62,7 +62,7 @@ export default function SearchHistory({
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Search Filters
+            Procurar Filtros
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -89,7 +89,7 @@ export default function SearchHistory({
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="timestamp">Date</SelectItem>
+                <SelectItem value="timestamp">Data</SelectItem>
                 <SelectItem value="username">Username</SelectItem>
               </SelectContent>
             </Select>
@@ -104,8 +104,8 @@ export default function SearchHistory({
                 <SelectValue placeholder="Order" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="asc">Ascending</SelectItem>
-                <SelectItem value="desc">Descending</SelectItem>
+                <SelectItem value="asc">Crescente</SelectItem>
+                <SelectItem value="desc">Decrescente</SelectItem>
               </SelectContent>
             </Select>
 
@@ -116,13 +116,13 @@ export default function SearchHistory({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Results per page" />
+                <SelectValue placeholder="Resultado por página" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="5">5 per page</SelectItem>
-                <SelectItem value="10">10 per page</SelectItem>
-                <SelectItem value="25">25 per page</SelectItem>
-                <SelectItem value="50">50 per page</SelectItem>
+                <SelectItem value="5">5 por page</SelectItem>
+                <SelectItem value="10">10 por page</SelectItem>
+                <SelectItem value="25">25 por page</SelectItem>
+                <SelectItem value="50">50 por page</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -200,7 +200,7 @@ export default function SearchHistory({
                       <p className="text-2xl font-bold text-orange-600">
                         {entry.result.engagementMetrics.engagementRate.toFixed(2)}%
                       </p>
-                      <p className="text-sm text-gray-500">Engagement</p>
+                      <p className="text-sm text-gray-500">Engajamento</p>
                     </div>
                   </div>
                 ) : (
@@ -213,7 +213,7 @@ export default function SearchHistory({
 
                 <Accordion type="single" collapsible>
                   <AccordionItem value="result">
-                    <AccordionTrigger>View Full Results</AccordionTrigger>
+                    <AccordionTrigger>Ver Todos os Resultados</AccordionTrigger>
                     <AccordionContent>
                       <pre className="bg-gray-50 p-4 rounded-md overflow-x-auto text-xs">
                         <code>
@@ -235,17 +235,17 @@ export default function SearchHistory({
             onClick={() => handleFilterChange('page', filters.page - 1)}
             disabled={filters.page <= 1}
           >
-            Previous
+            Anterior
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {filters.page} of {totalPages}
+            Página {filters.page} of {totalPages}
           </span>
           <Button
             variant="outline"
             onClick={() => handleFilterChange('page', filters.page + 1)}
             disabled={filters.page >= totalPages}
           >
-            Next
+            Próximo
           </Button>
         </div>
       </div>

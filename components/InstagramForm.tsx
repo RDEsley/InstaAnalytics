@@ -87,7 +87,7 @@ export default function InstagramForm({
                       {isLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Analyzing...
+                          Analisando...
                         </>
                       ) : (
                         'Analyze'
@@ -100,7 +100,7 @@ export default function InstagramForm({
             )}
           />
           <p className="text-center text-sm text-gray-500">
-            Enter any public Instagram username to generate analytics
+            Digite qualquer Instagram Username para gerar Análises...
           </p>
         </form>
       </Form>

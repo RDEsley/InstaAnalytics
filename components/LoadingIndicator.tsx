@@ -44,7 +44,7 @@ export default function LoadingIndicator({
       transition={{ duration: 0.3 }}
     >
       <div className="flex justify-between text-sm text-muted-foreground">
-        <span>Analyzing profile</span>
+        <span>Analisando Perfil</span>
         <span>{progress}%</span>
       </div>
       <Progress value={progress} className="h-2" />
