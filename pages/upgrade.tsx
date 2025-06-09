@@ -104,7 +104,7 @@ export default function UpgradePage() {
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative">
         {/* Background Image with Overlay */}
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=2074&q=80')] bg-cover bg-center bg-no-repeat">
+        <div className="absolute inset-0 bg-[url('')] bg-cover bg-center bg-no-repeat">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-indigo-900/30 to-purple-900/20 backdrop-blur-[1px]"></div>
         </div>
 
@@ -161,7 +161,7 @@ export default function UpgradePage() {
                   className="relative"
                 >
                   {tier.popular && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <div className="absolute -top-12 left-1/2 transform -translate-x-1/2">
                       <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1">
                         Mais Popular
                       </Badge>
@@ -170,8 +170,8 @@ export default function UpgradePage() {
                   
                   <Card className={`h-full transition-all duration-300 hover:shadow-2xl hover:scale-105 ${
                     tier.popular 
-                      ? 'ring-2 ring-blue-500 bg-white/95 backdrop-blur-sm' 
-                      : 'bg-white/90 backdrop-blur-sm hover:bg-white/95'
+                      ? 'ring-2 ring-blue-500 bg-white/95' 
+                      : 'bg-white/90 hover:bg-white/95'
                   }`}>
                     <CardHeader className="text-center pb-4">
                       <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4 ${
