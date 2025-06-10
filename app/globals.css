@@ -104,21 +104,21 @@
 
 /* Alternative background images - you can change these URLs */
 .auth-background {
-  background-image: url('');
+  background-image: url('https://w.wallhaven.cc/full/5g/wallhaven-5gym13.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 
 .dashboard-background {
-  background-image: url('');
+  background-image: url('https://w.wallhaven.cc/full/0w/wallhaven-0w3pdr.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 
 .upgrade-background {
-  background-image: url('');
+  background-image: url('https://w.wallhaven.cc/full/4x/wallhaven-4x12gd.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

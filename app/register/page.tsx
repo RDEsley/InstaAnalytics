@@ -134,10 +134,10 @@ export default function RegisterPage() {
                 <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">IA</span>
                 </div>
-                <span className="text-2xl font-bold text-gray-900">InstaAnalytics</span>
+                <span className="text-2xl font-bold text-white">InstaAnalytics</span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Crie sua conta</h1>
-              <p className="text-gray-600">Comece a analisar perfis do Instagram hoje</p>
+              <h1 className="text-2xl font-bold text-white mb-2">Crie sua conta</h1>
+              <p className="text-white">Comece a analisar perfis do Instagram hoje</p>
             </div>
 
             <Card className="bg-white/95 backdrop-blur-sm">

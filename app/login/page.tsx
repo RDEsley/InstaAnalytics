@@ -63,9 +63,9 @@ export default function LoginPage() {
   return (
     <AuthGuard requireAuth={false}>
       <div className="min-h-screen relative auth-background">
-        {/* Background Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-indigo-900/30 to-purple-900/20 backdrop-blur-[1px]"></div>
-        
+
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-indigo-900/30 to-purple-900/20 backdrop-blur-[1px]"></div>
+
         {/* Content */}
         <div className="relative z-10 flex items-center justify-center p-4 min-h-screen">
           <motion.div
@@ -80,10 +80,10 @@ export default function LoginPage() {
                 <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-lg">IA</span>
                 </div>
-                <span className="text-2xl font-bold text-gray-900">InstaAnalytics</span>
+                <span className="text-2xl font-bold text-white">InstaAnalytics</span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Bem-vindo de volta!</h1>
-              <p className="text-gray-600">Entre na sua conta para continuar</p>
+              <h1 className="text-2xl font-bold text-white mb-2">Bem-vindo de volta!</h1>
+              <p className="text-white">Entre na sua conta para continuar</p>
             </div>
 
             <Card className="bg-white/95 backdrop-blur-sm">

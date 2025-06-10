@@ -92,8 +92,9 @@ export default function Home() {
     <AuthGuard requireAuth={true}>
       <div className="min-h-screen relative dashboard-background">
         {/* Background Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 via-indigo-50/80 to-purple-50/80 backdrop-blur-[1px]"></div>
-        
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-200/50 via-slate-300/50 to-slate-400/50"></div>
+
+
         {/* Content */}
         <div className="relative z-10">
           <Header />
