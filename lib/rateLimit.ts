@@ -1,20 +1,23 @@
 import { LRUCache } from 'lru-cache';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { ApiResponse } from './types';
 
-// Define rate limit settings
-const MAX_REQUESTS_PER_MINUTE = 5; // 5 requests per minute
-const CACHE_TTL = 60 * 1000; // 1 minute in milliseconds
+// Define rate limit settings for different endpoints
+const RATE_LIMITS = {
+  login: { maxRequests: 5, windowMs: 60 * 1000 }, // 5 requests per minute
+  register: { maxRequests: 3, windowMs: 60 * 1000 }, // 3 requests per minute
+  analyze: { maxRequests: 5, windowMs: 60 * 1000 }, // 5 requests per minute
+  default: { maxRequests: 10, windowMs: 60 * 1000 }, // 10 requests per minute
+};
 
 interface RateLimitInfo {
   count: number;
-  timestamp: number;
+  resetTime: number;
 }
 
-// Create cache to store request counts by IP
+// Create cache to store request counts by IP and endpoint
 const rateLimitCache = new LRUCache<string, RateLimitInfo>({
-  max: 500, // Maximum number of IPs to track
-  ttl: CACHE_TTL, // Cache entries expire after 1 minute
+  max: 1000, // Maximum number of entries to track
+  ttl: 60 * 1000, // Cache entries expire after 1 minute
 });
 
 // Get client IP from request
@@ -25,41 +28,121 @@ const getClientIp = (req: NextApiRequest): string => {
     return forwardedFor.split(',')[0].trim();
   }
   
+  // Use X-Real-IP header
+  const realIp = req.headers['x-real-ip'];
+  if (realIp && typeof realIp === 'string') {
+    return realIp;
+  }
+  
   // Fallback to connection remote address
   return req.socket.remoteAddress || 'unknown';
 };
 
+// Get rate limit settings based on endpoint
+const getRateLimitSettings = (req: NextApiRequest) => {
+  const url = req.url || '';
+  
+  if (url.includes('/auth/login')) return RATE_LIMITS.login;
+  if (url.includes('/auth/register')) return RATE_LIMITS.register;
+  if (url.includes('/analyze')) return RATE_LIMITS.analyze;
+  
+  return RATE_LIMITS.default;
+};
+
 // Rate limiting middleware
-export const rateLimit = (req: NextApiRequest, res: NextApiResponse<ApiResponse>) => {
+export const rateLimit = (req: NextApiRequest, res: NextApiResponse) => {
   const ip = getClientIp(req);
+  const endpoint = req.url || 'unknown';
+  const cacheKey = `${ip}:${endpoint}`;
+  const settings = getRateLimitSettings(req);
   
-  // Get current count from cache
-  const rateLimitInfo = rateLimitCache.get(ip) || { count: 0, timestamp: Date.now() };
+  const now = Date.now();
+  const windowStart = now - settings.windowMs;
   
-  // Reset count if more than a minute has passed
-  if (Date.now() - rateLimitInfo.timestamp > CACHE_TTL) {
-    rateLimitInfo.count = 0;
-    rateLimitInfo.timestamp = Date.now();
+  // Get current rate limit info from cache
+  let rateLimitInfo = rateLimitCache.get(cacheKey);
+  
+  // Reset if outside the current window
+  if (!rateLimitInfo || rateLimitInfo.resetTime <= now) {
+    rateLimitInfo = {
+      count: 0,
+      resetTime: now + settings.windowMs,
+    };
   }
   
   // Increment request count
   rateLimitInfo.count += 1;
-  rateLimitCache.set(ip, rateLimitInfo);
+  rateLimitCache.set(cacheKey, rateLimitInfo);
+  
+  // Calculate remaining requests and reset time
+  const remaining = Math.max(0, settings.maxRequests - rateLimitInfo.count);
+  const resetTime = Math.ceil(rateLimitInfo.resetTime / 1000);
   
   // Set rate limit headers
-  res.setHeader('X-RateLimit-Limit', MAX_REQUESTS_PER_MINUTE);
-  res.setHeader('X-RateLimit-Remaining', Math.max(0, MAX_REQUESTS_PER_MINUTE - rateLimitInfo.count));
-  res.setHeader('X-RateLimit-Reset', new Date(rateLimitInfo.timestamp + CACHE_TTL).toISOString());
+  res.setHeader('X-RateLimit-Limit', settings.maxRequests);
+  res.setHeader('X-RateLimit-Remaining', remaining);
+  res.setHeader('X-RateLimit-Reset', resetTime);
+  res.setHeader('X-RateLimit-Window', settings.windowMs / 1000);
   
-  // Return true if limit exceeded
-  if (rateLimitInfo.count > MAX_REQUESTS_PER_MINUTE) {
+  // Check if limit exceeded
+  if (rateLimitInfo.count > settings.maxRequests) {
+    // Log rate limit violation
+    console.log(`Rate limit exceeded for IP ${ip} on endpoint ${endpoint} at ${new Date().toISOString()}`);
+    
     res.status(429).json({
       success: false,
       error: 'Too many requests',
-      message: 'Rate limit exceeded. Please try again in a minute.',
+      message: 'Muitas tentativas. Tente novamente em alguns minutos.',
+      retryAfter: Math.ceil((rateLimitInfo.resetTime - now) / 1000),
     });
     return true;
   }
   
   return false;
+};
+
+// Enhanced rate limiting with different strategies
+export const enhancedRateLimit = (
+  req: NextApiRequest, 
+  res: NextApiResponse,
+  options?: {
+    maxRequests?: number;
+    windowMs?: number;
+    skipSuccessfulRequests?: boolean;
+    skipFailedRequests?: boolean;
+  }
+) => {
+  const settings = options || getRateLimitSettings(req);
+  return rateLimit(req, res);
+};
+
+// Utility function to check if IP is rate limited
+export const isRateLimited = (req: NextApiRequest): boolean => {
+  const ip = getClientIp(req);
+  const endpoint = req.url || 'unknown';
+  const cacheKey = `${ip}:${endpoint}`;
+  const settings = getRateLimitSettings(req);
+  
+  const rateLimitInfo = rateLimitCache.get(cacheKey);
+  
+  if (!rateLimitInfo) return false;
+  
+  const now = Date.now();
+  if (rateLimitInfo.resetTime <= now) return false;
+  
+  return rateLimitInfo.count >= settings.maxRequests;
+};
+
+// Clear rate limit for specific IP (useful for testing or admin override)
+export const clearRateLimit = (ip: string, endpoint?: string): void => {
+  if (endpoint) {
+    rateLimitCache.delete(`${ip}:${endpoint}`);
+  } else {
+    // Clear all entries for this IP
+    for (const key of rateLimitCache.keys()) {
+      if (key.startsWith(`${ip}:`)) {
+        rateLimitCache.delete(key);
+      }
+    }
+  }
 };
