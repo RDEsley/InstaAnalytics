@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const usernameSchema = z.string()
   .regex(
     /^@?[\w](?!.*?\.{2})[\w.]{1,28}[\w]$/,
-    'Invalid Instagram handle format'
+    'Formato de usuário do Instagram inválido'
   )
   .transform(value => {
     // Remove @ symbol if present
@@ -35,37 +35,31 @@ export const sanitizeUsername = (input: string): string => {
   return username;
 };
 
-// Validate API response from Apify
+// Validate API response from Apify Instagram Profile Scraper
 export function validateApifyResponse(data: any[]): boolean {
-  if (!Array.isArray(data) || data.length === 0) return false;
-
-  // 1) Procura o objeto "perfil" via ownerUsername
-  const profileItem = data.find((item) => typeof item.ownerUsername === 'string');
-  if (!profileItem) {
-    // não encontrou nenhum objeto com ownerUsername
-    return false;
-  }
-  // Como perfilItem existe, validamos ao menos esse campo:
-  if (
-    typeof profileItem.ownerUsername !== 'string' ||
-    typeof profileItem.ownerFullName !== 'string'
-  ) {
+  if (!Array.isArray(data) || data.length === 0) {
+    console.error('Dados vazios ou formato inválido do Apify');
     return false;
   }
 
-  // 2) Procura pelo menos um post no array que satisfaça as condições mínimas:
-  const hasAtLeastOnePost = data.some((item) => {
-    return (
-      typeof item.id === 'string' &&
-      typeof item.displayUrl === 'string'
-      // Se quiser checar algo extra (por exemplo, likesCount existindo, mesmo que seja null),
-      // você pode checar typeof item.likesCount === 'number' ou 'string' etc.
-    );
-  });
+  // Procura por dados do perfil no formato do Instagram Profile Scraper
+  const profileData = data.find((item) => 
+    item.username && 
+    typeof item.followersCount !== 'undefined' &&
+    typeof item.followingCount !== 'undefined'
+  );
 
-  if (!hasAtLeastOnePost) {
+  if (!profileData) {
+    console.error('Dados do perfil não encontrados na resposta do Apify');
     return false;
   }
 
+  // Validações básicas dos campos obrigatórios
+  if (typeof profileData.username !== 'string') {
+    console.error('Username inválido nos dados do perfil');
+    return false;
+  }
+
+  console.log('→ Validação bem-sucedida dos dados do Apify');
   return true;
 }

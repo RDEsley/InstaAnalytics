@@ -7,24 +7,26 @@ const apifyClient = new ApifyClient({
   token: process.env.APIFY_API_TOKEN,
 });
 
-const ACTOR_ID = 'apify/instagram-post-scraper';
-const MAX_WAIT_TIME = 30000; // 30 segundos
-const POLLING_INTERVAL = 2000; // 2 segundos
+const ACTOR_ID = 'apify/instagram-profile-scraper';
+const MAX_WAIT_TIME = 45000; // 45 segundos
+const POLLING_INTERVAL = 3000; // 3 segundos
 
 export const startApifyRun = async (username: string) => {
   const inputPayload = {
-    username: [username],
-    resultsLimit: 10,
-    skipPinnedPosts: false,
+    usernames: [username],
+    resultsLimit: 50, // Aumentado para obter mais posts
+    addParentData: true,
   };
-  console.log('→ payload JSON que vai para Apify:', JSON.stringify(inputPayload, null, 2));
+  
+  console.log('→ Payload JSON enviado para Apify:', JSON.stringify(inputPayload, null, 2));
+  
   try {
-    // Usa .call() para executar o actor imediatamente
     const run = await apifyClient.actor(ACTOR_ID).call(inputPayload);
+    console.log('→ Run iniciado com ID:', run.id);
     return run;
   } catch (error) {
-    console.error('Error starting Apify run:', error);
-    throw new Error('Failed to start profile analysis');
+    console.error('Erro ao iniciar run do Apify:', error);
+    throw new Error('Falha ao iniciar análise do perfil');
   }
 };
 
@@ -33,102 +35,172 @@ export const waitForApifyRun = async (runId: string): Promise<any> => {
   let isFinished = false;
 
   while (!isFinished && Date.now() - startTime < MAX_WAIT_TIME) {
-    const runInfo = await apifyClient.run(runId).get();
-    if (!runInfo) throw new Error('Failed to retrieve run info from Apify');
+    try {
+      const runInfo = await apifyClient.run(runId).get();
+      if (!runInfo) throw new Error('Falha ao recuperar informações do run do Apify');
 
-    if (runInfo.status === 'SUCCEEDED') {
-      isFinished = true;
+      console.log('→ Status do run:', runInfo.status);
 
-      // Pega todos os itens do dataset
-      const { items } = await apifyClient.dataset(runInfo.defaultDatasetId).listItems();
+      if (runInfo.status === 'SUCCEEDED') {
+        isFinished = true;
 
-      // Logar para conferir o que veio
-      console.log('→ Conteúdo de items vindos do Apify:', JSON.stringify(items, null, 2));
+        // Pega todos os itens do dataset
+        const { items } = await apifyClient.dataset(runInfo.defaultDatasetId).listItems();
 
-      // CHAMA A VALIDAÇÃO QUE AGORA ESTÁ CORRIGIDA
-      if (!validateApifyResponse(items)) {
-        throw new Error('Invalid response format from Apify');
+        console.log('→ Número de itens retornados:', items.length);
+        console.log('→ Primeiro item (amostra):', JSON.stringify(items[0], null, 2));
+
+        // Valida a resposta
+        if (!validateApifyProfileResponse(items)) {
+          throw new Error('Formato de resposta inválido do Apify');
+        }
+
+        return items;
       }
 
-      return items;
-    }
+      if (runInfo.status === 'FAILED') {
+        throw new Error('Análise falhou no Apify');
+      }
 
-    // Caso ainda não terminou, aguarda e repete
-    await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL));
+      // Aguarda antes de verificar novamente
+      await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL));
+    } catch (error) {
+      console.error('Erro ao verificar status do run:', error);
+      throw error;
+    }
   }
 
   if (!isFinished) {
-    throw new Error('Analysis timed out. Please try again.');
+    throw new Error('Análise expirou. Tente novamente.');
   }
 };
 
-// A função de transformação dos dados pode permanecer igual, pois ela
-// assume que o array "data" veio no formato esperado após a validação.
+// Validação específica para o Instagram Profile Scraper
+const validateApifyProfileResponse = (data: any[]): boolean => {
+  if (!Array.isArray(data) || data.length === 0) {
+    console.error('Dados vazios ou inválidos do Apify');
+    return false;
+  }
+
+  // Procura por dados do perfil
+  const profileData = data.find((item) => 
+    item.username && 
+    typeof item.followersCount !== 'undefined' &&
+    typeof item.followingCount !== 'undefined'
+  );
+
+  if (!profileData) {
+    console.error('Dados do perfil não encontrados');
+    return false;
+  }
+
+  console.log('→ Dados do perfil encontrados:', {
+    username: profileData.username,
+    followers: profileData.followersCount,
+    following: profileData.followingCount,
+    posts: profileData.postsCount
+  });
+
+  return true;
+};
+
 export const processApifyData = (data: any[]): AnalysisResult => {
-  // Se seu "perfil" está vindo como último elemento, podemos usar find() de novo:
-  const profileData = data.find((item) => typeof item.ownerUsername === 'string') || data[0];
+  console.log('→ Processando dados do Apify...');
   
-  // "profileData" agora tem as chaves ownerUsername, ownerFullName, etc.
+  // Encontra os dados do perfil
+  const profileData = data.find((item) => 
+    item.username && 
+    typeof item.followersCount !== 'undefined'
+  ) || data[0];
+
+  if (!profileData) {
+    throw new Error('Dados do perfil não encontrados');
+  }
+
+  // Extrai informações do perfil
   const userInfo = {
-    username: profileData.ownerUsername,
-    fullName: profileData.ownerFullName,
-    biography: profileData.biography || '',        // depende se o actor devolve "biography"
-    followersCount: parseInt(profileData.followersCount || profileData.followers_count || '0', 10),
-    followingCount: parseInt(profileData.followingCount || profileData.following_count || '0', 10),
-    postsCount: parseInt(profileData.postsCount || profileData.posts_count || '0', 10),
-    profilePicUrl: profileData.profilePicUrl || profileData.profile_pic_url,
+    username: profileData.username || '',
+    fullName: profileData.fullName || profileData.name || '',
+    biography: profileData.biography || profileData.bio || '',
+    followersCount: parseInt(String(profileData.followersCount || 0), 10),
+    followingCount: parseInt(String(profileData.followingCount || 0), 10),
+    postsCount: parseInt(String(profileData.postsCount || 0), 10),
+    profilePicUrl: profileData.profilePicUrl || profileData.profilePic || '',
     isPrivate: Boolean(profileData.isPrivate),
-    isVerified: Boolean(profileData.isVerified ?? profileData.is_verified),
+    isVerified: Boolean(profileData.isVerified || profileData.verified),
   };
 
-  // Agora pega todos os itens que são posts (filtrando para ter "id" e "displayUrl")
-  const posts: InstagramPost[] = data
-    .filter((item) => typeof item.id === 'string' && typeof item.displayUrl === 'string')
-    .map((item) => ({
-      id: item.id,
-      caption: item.caption || '',
-      likesCount: item.likesCount !== null ? parseInt(item.likesCount, 10) : 0,
-      commentsCount: item.commentsCount !== null ? item.commentsCount : 0,
-      timestamp: item.timestamp || '',
-      url: item.url || '',
-      mediaType: item.type || item.mediaType || '',
-      mediaUrl: item.displayUrl,
-      locationName: item.locationName || item.location_name || null,
-    }));
+  console.log('→ Informações do perfil processadas:', userInfo);
 
-  // Calculate engagement metrics
+  // Processa posts - podem estar em latestPosts ou como itens separados
+  let posts: InstagramPost[] = [];
+  
+  if (profileData.latestPosts && Array.isArray(profileData.latestPosts)) {
+    posts = profileData.latestPosts.map((post: any) => ({
+      id: post.id || post.shortcode || '',
+      caption: post.caption || '',
+      likesCount: parseInt(String(post.likesCount || post.likes || 0), 10),
+      commentsCount: parseInt(String(post.commentsCount || post.comments || 0), 10),
+      timestamp: post.timestamp || post.takenAt || new Date().toISOString(),
+      url: post.url || `https://instagram.com/p/${post.shortcode || post.id}/`,
+      mediaType: post.type || post.mediaType || 'image',
+      mediaUrl: post.displayUrl || post.imageUrl || '',
+      locationName: post.locationName || null,
+    }));
+  } else {
+    // Procura posts como itens separados no array
+    posts = data
+      .filter((item) => item.shortcode || (item.id && item.displayUrl))
+      .map((item) => ({
+        id: item.id || item.shortcode || '',
+        caption: item.caption || '',
+        likesCount: parseInt(String(item.likesCount || item.likes || 0), 10),
+        commentsCount: parseInt(String(item.commentsCount || item.comments || 0), 10),
+        timestamp: item.timestamp || item.takenAt || new Date().toISOString(),
+        url: item.url || `https://instagram.com/p/${item.shortcode || item.id}/`,
+        mediaType: item.type || item.mediaType || 'image',
+        mediaUrl: item.displayUrl || item.imageUrl || '',
+        locationName: item.locationName || null,
+      }));
+  }
+
+  console.log('→ Número de posts processados:', posts.length);
+
+  // Calcula métricas de engajamento
   const totalLikes = posts.reduce((sum, post) => sum + post.likesCount, 0);
   const totalComments = posts.reduce((sum, post) => sum + post.commentsCount, 0);
   const averageLikes = posts.length > 0 ? totalLikes / posts.length : 0;
   const averageComments = posts.length > 0 ? totalComments / posts.length : 0;
   
-  // Calculate engagement rate (simplified formula)
+  // Calcula taxa de engajamento
   const engagementRate = userInfo.followersCount > 0 
     ? ((averageLikes + averageComments) / userInfo.followersCount) * 100 
     : 0;
 
-  // Estimate posting frequency (posts per month)
-  const postingFrequency = posts.length > 0 ? (posts.length / 30) * 30 : 0; // Simplified
+  // Estima frequência de postagem (posts por mês)
+  const postingFrequency = posts.length > 0 ? (posts.length / 30) * 30 : 0;
 
-  // Find best performing post
+  // Encontra o post com melhor performance (mais likes)
   const bestPerformingPost = posts.length > 0 
     ? posts.reduce((best, current) => 
-        (current.likesCount + current.commentsCount) > (best.likesCount + best.commentsCount) 
-          ? current 
-          : best
+        current.likesCount > best.likesCount ? current : best
       )
     : undefined;
+
+  const engagementMetrics: EngagementMetrics = {
+    engagementRate: Math.round(engagementRate * 100) / 100,
+    postingFrequency: Math.round(postingFrequency * 100) / 100,
+    averageLikes: Math.round(averageLikes),
+    averageComments: Math.round(averageComments),
+    bestPerformingPost,
+  };
+
+  console.log('→ Métricas de engajamento calculadas:', engagementMetrics);
 
   return {
     profile: userInfo,
     posts,
-    engagementMetrics: {
-      engagementRate: Math.round(engagementRate * 100) / 100,
-      postingFrequency: Math.round(postingFrequency * 100) / 100,
-      averageLikes: Math.round(averageLikes),
-      averageComments: Math.round(averageComments),
-      bestPerformingPost,
-    },
+    engagementMetrics,
     timestamp: new Date().toISOString(),
   };
 };
