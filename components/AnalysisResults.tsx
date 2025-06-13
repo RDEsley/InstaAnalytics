@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { 
   Users, 
   UserPlus, 
@@ -42,14 +43,17 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
   const { profile, posts, engagementMetrics, timestamp } = data;
   
   // Format timestamp
-  const formattedTimestamp = format(new Date(timestamp), 'PPP');
+  const formattedTimestamp = format(new Date(timestamp), 'PPP', { locale: ptBR });
   
-  // Format chart data
-  const chartData = posts.slice(0, 5).map(post => ({
-    id: post.id.substring(0, 6),
-    likes: post.likesCount,
-    comments: post.commentsCount,
-  }));
+  // Format chart data - mostra os 5 posts com mais likes
+  const chartData = posts
+    .sort((a, b) => b.likesCount - a.likesCount)
+    .slice(0, 5)
+    .map((post, index) => ({
+      id: `Post ${index + 1}`,
+      likes: post.likesCount,
+      comments: post.commentsCount,
+    }));
   
   // Get engagement rating label
   const getEngagementRating = (rate: number) => {
@@ -83,7 +87,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
       className="w-full space-y-6"
     >
       {/* Profile Header */}
-      <Card>
+      <Card className="bg-white/90 backdrop-blur-sm">
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Avatar className="h-24 w-24 border-2 border-pink-200">
@@ -119,7 +123,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
         animate="show"
       >
         <motion.div variants={itemVariants}>
-          <Card className="h-full">
+          <Card className="h-full bg-white/90 backdrop-blur-sm">
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-1">
                 <Users className="h-4 w-4" />
@@ -127,13 +131,13 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <p className="text-2xl font-bold">{profile.followersCount.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{profile.followersCount.toLocaleString('pt-BR')}</p>
             </CardContent>
           </Card>
         </motion.div>
         
         <motion.div variants={itemVariants}>
-          <Card className="h-full">
+          <Card className="h-full bg-white/90 backdrop-blur-sm">
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-1">
                 <UserPlus className="h-4 w-4" />
@@ -141,13 +145,13 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <p className="text-2xl font-bold">{profile.followingCount.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{profile.followingCount.toLocaleString('pt-BR')}</p>
             </CardContent>
           </Card>
         </motion.div>
         
         <motion.div variants={itemVariants}>
-          <Card className="h-full">
+          <Card className="h-full bg-white/90 backdrop-blur-sm">
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-1">
                 <ImageIcon className="h-4 w-4" />
@@ -155,13 +159,13 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <p className="text-2xl font-bold">{profile.postsCount.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{profile.postsCount.toLocaleString('pt-BR')}</p>
             </CardContent>
           </Card>
         </motion.div>
         
         <motion.div variants={itemVariants}>
-          <Card className="h-full">
+          <Card className="h-full bg-white/90 backdrop-blur-sm">
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-1">
                 <TrendingUp className="h-4 w-4" />
@@ -182,7 +186,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
           onClick={() => setTab('overview')}
           className="rounded-none rounded-t-lg"
         >
-          Overview
+          Visão Geral
         </Button>
         <Button 
           variant={tab === 'engagement' ? 'default' : 'ghost'} 
@@ -204,10 +208,10 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
           >
             {/* Best Performing Post */}
             {engagementMetrics.bestPerformingPost && (
-              <Card>
+              <Card className="bg-white/90 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg">Melhor Performance Post</CardTitle>
-                  <CardDescription>Post com maior engajamento</CardDescription>
+                  <CardTitle className="text-lg">Post com Melhor Performance</CardTitle>
+                  <CardDescription>Post com maior número de curtidas</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex flex-col sm:flex-row gap-4">
@@ -215,7 +219,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                       <div className="rounded-md overflow-hidden h-40 w-full sm:w-40 bg-muted flex items-center justify-center">
                         <img 
                           src={engagementMetrics.bestPerformingPost.mediaUrl} 
-                          alt="Top post" 
+                          alt="Post com melhor performance" 
                           className="object-cover h-full w-full"
                           onError={(e) => {
                             e.currentTarget.src = `https://ui-avatars.com/api/?name=${profile.username}&background=random`;
@@ -225,16 +229,16 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                     )}
                     <div className="flex-1">
                       <p className="text-sm line-clamp-3 mb-2">
-                        {engagementMetrics.bestPerformingPost.caption || "No caption"}
+                        {engagementMetrics.bestPerformingPost.caption || "Sem legenda"}
                       </p>
                       <div className="flex gap-4">
                         <div className="flex items-center gap-1">
                           <Heart className="h-4 w-4 text-red-500" />
-                          <span>{engagementMetrics.bestPerformingPost.likesCount.toLocaleString()}</span>
+                          <span>{engagementMetrics.bestPerformingPost.likesCount.toLocaleString('pt-BR')}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <MessageCircle className="h-4 w-4 text-blue-500" />
-                          <span>{engagementMetrics.bestPerformingPost.commentsCount.toLocaleString()}</span>
+                          <span>{engagementMetrics.bestPerformingPost.commentsCount.toLocaleString('pt-BR')}</span>
                         </div>
                       </div>
                       {engagementMetrics.bestPerformingPost.locationName && (
@@ -259,35 +263,42 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
               </Card>
             )}
             
-            {/* Recent Posts */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Posts Recentes</CardTitle>
-                <CardDescription>Desempenho de conteúdo mais recente</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={chartData}
-                      margin={{
-                        top: 20,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="id" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="likes" name="Likes" fill="hsl(var(--chart-1))" />
-                      <Bar dataKey="comments" name="Comments" fill="hsl(var(--chart-2))" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Top Posts Chart */}
+            {posts.length > 0 && (
+              <Card className="bg-white/90 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Top 5 Posts por Curtidas</CardTitle>
+                  <CardDescription>Posts com maior engajamento</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={chartData}
+                        margin={{
+                          top: 20,
+                          right: 30,
+                          left: 20,
+                          bottom: 5,
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="id" />
+                        <YAxis />
+                        <Tooltip 
+                          formatter={(value, name) => [
+                            value.toLocaleString('pt-BR'), 
+                            name === 'likes' ? 'Curtidas' : 'Comentários'
+                          ]}
+                        />
+                        <Bar dataKey="likes" name="Curtidas" fill="hsl(var(--chart-1))" />
+                        <Bar dataKey="comments" name="Comentários" fill="hsl(var(--chart-2))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </motion.div>
         ) : (
           <motion.div 
@@ -297,7 +308,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
             className="space-y-6"
           >
             {/* Engagement Metrics */}
-            <Card>
+            <Card className="bg-white/90 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Análises de Engajamento</CardTitle>
                 <CardDescription>Métricas principais sobre interação do público</CardDescription>
@@ -308,7 +319,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                   <div className="flex justify-between">
                     <h3 className="font-medium flex items-center gap-2">
                       <BarChart3 className="h-4 w-4 text-pink-500" />
-                      Nível de engajamento
+                      Taxa de Engajamento
                     </h3>
                     <span className="text-sm font-bold">{engagementMetrics.engagementRate.toFixed(2)}%</span>
                   </div>
@@ -330,9 +341,9 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Heart className="h-4 w-4" />
-                      Média de Likes por Post
+                      Média de Curtidas por Post
                     </p>
-                    <p className="text-2xl font-semibold">{Math.round(engagementMetrics.averageLikes).toLocaleString()}</p>
+                    <p className="text-2xl font-semibold">{Math.round(engagementMetrics.averageLikes).toLocaleString('pt-BR')}</p>
                   </div>
                   
                   <div className="space-y-1">
@@ -340,7 +351,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                       <MessageCircle className="h-4 w-4" />
                       Média de Comentários por Post
                     </p>
-                    <p className="text-2xl font-semibold">{Math.round(engagementMetrics.averageComments).toLocaleString()}</p>
+                    <p className="text-2xl font-semibold">{Math.round(engagementMetrics.averageComments).toLocaleString('pt-BR')}</p>
                   </div>
                   
                   <div className="space-y-1">
@@ -348,18 +359,18 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
                       <Calendar className="h-4 w-4" />
                       Frequência de Posts
                     </p>
-                    <p className="text-2xl font-semibold">{engagementMetrics.postingFrequency.toFixed(1)}<span className="text-sm text-muted-foreground ml-1">posts/month</span></p>
+                    <p className="text-2xl font-semibold">{engagementMetrics.postingFrequency.toFixed(1)}<span className="text-sm text-muted-foreground ml-1">posts/mês</span></p>
                   </div>
                   
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <Users className="h-4 w-4" />
-                      Proporção de Seguidores-Seguidores
+                      Proporção Seguidores/Seguindo
                     </p>
                     <p className="text-2xl font-semibold">
                       {profile.followingCount > 0 
                         ? (profile.followersCount / profile.followingCount).toFixed(1) 
-                        : '0'}
+                        : '∞'}
                     </p>
                   </div>
                 </div>
@@ -374,7 +385,7 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
           Análise realizada em {formattedTimestamp}
         </p>
         <Button variant="outline" onClick={onReset}>
-          Analise outro Perfil
+          Analisar outro Perfil
         </Button>
       </div>
     </motion.div>
