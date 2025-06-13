@@ -256,7 +256,7 @@ export default function RegisterPage() {
                                 <div className="relative">
                                   <Input
                                     type={showPassword ? 'text' : 'senha'}
-                                    placeholder="Create a password (min. 6 characters)"
+                                    placeholder="Crie uma senha (min. 6 caracteres)"
                                     className="h-12 border-gray-200 focus:border-teal-500 focus:ring-teal-500 pr-12"
                                     {...field}
                                     disabled={isLoading}

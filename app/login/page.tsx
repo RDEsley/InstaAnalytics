@@ -161,7 +161,7 @@ export default function LoginPage() {
                               <FormControl>
                                 <Input
                                   type="email"
-                                  placeholder="Enter your email"
+                                  placeholder="Digite o seu email"
                                   className="h-12 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                                   {...field}
                                   disabled={isLoading}
@@ -182,7 +182,7 @@ export default function LoginPage() {
                                 <div className="relative">
                                   <Input
                                     type={showPassword ? 'text' : 'password'}
-                                    placeholder="Enter your password"
+                                    placeholder="Digite sua senha"
                                     className="h-12 border-gray-200 focus:border-teal-500 focus:ring-teal-500 pr-12"
                                     {...field}
                                     disabled={isLoading}
