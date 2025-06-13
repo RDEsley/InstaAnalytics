@@ -137,9 +137,9 @@ export default function LoginPage() {
                     <div className="w-16 h-16 bg-teal-600 rounded-full mx-auto mb-4 flex items-center justify-center">
                       <span className="text-white font-bold text-xl">IA</span>
                     </div>
-                    <CardTitle className="text-2xl font-bold text-gray-800">Welcome Back</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-gray-800">Bem-Vindo de volta</CardTitle>
                     <CardDescription className="text-gray-600">
-                      Sign in to your account to continue
+                      Entre na sua conta para continuar
                     </CardDescription>
                   </CardHeader>
                   
@@ -157,7 +157,7 @@ export default function LoginPage() {
                           name="email"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-700 font-medium">Username</FormLabel>
+                              <FormLabel className="text-gray-700 font-medium">Usuário</FormLabel>
                               <FormControl>
                                 <Input
                                   type="email"
@@ -177,7 +177,7 @@ export default function LoginPage() {
                           name="password"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
+                              <FormLabel className="text-gray-700 font-medium">Senha</FormLabel>
                               <FormControl>
                                 <div className="relative">
                                   <Input
@@ -220,14 +220,14 @@ export default function LoginPage() {
                               htmlFor="remember"
                               className="text-sm text-gray-600 cursor-pointer"
                             >
-                              Remember me
+                              Lembre de mim
                             </label>
                           </div>
                           <Link
                             href="/forgot-password"
                             className="text-sm text-teal-600 hover:text-teal-700 font-medium"
                           >
-                            Forgot Password?
+                            Esqueceu a senha?
                           </Link>
                         </div>
 
@@ -239,12 +239,12 @@ export default function LoginPage() {
                           {isLoading ? (
                             <>
                               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                              Signing in...
+                              Entrando
                             </>
                           ) : (
                             <>
                               <LogIn className="mr-2 h-5 w-5" />
-                              SUBMIT
+                              Entrar
                             </>
                           )}
                         </Button>
@@ -253,9 +253,9 @@ export default function LoginPage() {
 
                     <div className="text-center pt-4 border-t border-gray-200">
                       <p className="text-sm text-gray-600">
-                        Don't have an account?{' '}
+                        Não tem uma conta?{' '}
                         <Link href="/register" className="text-teal-600 hover:text-teal-700 font-medium">
-                          Sign up here
+                          Cadastre-se aqui
                         </Link>
                       </p>
                     </div>

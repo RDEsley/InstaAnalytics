@@ -99,10 +99,10 @@ export default function RegisterPage() {
                 </div>
                 <div className="space-y-2">
                   <h2 className="text-2xl font-bold text-gray-800">
-                    Account Created Successfully!
+                    Conta criada com sucesso
                   </h2>
                   <p className="text-gray-600">
-                    Your account has been created. Redirecting to login...
+                    Sua conta foi criada! Sendo direcionado ao login...
                   </p>
                 </div>
                 <div className="flex items-center justify-center space-x-2">
@@ -192,9 +192,9 @@ export default function RegisterPage() {
                     <div className="w-16 h-16 bg-teal-600 rounded-full mx-auto mb-4 flex items-center justify-center">
                       <span className="text-white font-bold text-xl">IA</span>
                     </div>
-                    <CardTitle className="text-2xl font-bold text-gray-800">Create Account</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-gray-800">Crie uma conta</CardTitle>
                     <CardDescription className="text-gray-600">
-                      Join us today and start analyzing Instagram profiles
+                      Analise seu perfil do Instagram
                     </CardDescription>
                   </CardHeader>
                   
@@ -212,10 +212,10 @@ export default function RegisterPage() {
                           name="fullName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-700 font-medium">Full Name</FormLabel>
+                              <FormLabel className="text-gray-700 font-medium">Nome completo</FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Enter your full name"
+                                  placeholder="Digite seu nome completo"
                                   className="h-12 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                                   {...field}
                                   disabled={isLoading}
@@ -235,7 +235,7 @@ export default function RegisterPage() {
                               <FormControl>
                                 <Input
                                   type="email"
-                                  placeholder="Enter your email"
+                                  placeholder="Digite seu email"
                                   className="h-12 border-gray-200 focus:border-teal-500 focus:ring-teal-500"
                                   {...field}
                                   disabled={isLoading}
@@ -251,11 +251,11 @@ export default function RegisterPage() {
                           name="password"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
+                              <FormLabel className="text-gray-700 font-medium">Senha</FormLabel>
                               <FormControl>
                                 <div className="relative">
                                   <Input
-                                    type={showPassword ? 'text' : 'password'}
+                                    type={showPassword ? 'text' : 'senha'}
                                     placeholder="Create a password (min. 6 characters)"
                                     className="h-12 border-gray-200 focus:border-teal-500 focus:ring-teal-500 pr-12"
                                     {...field}
@@ -287,12 +287,12 @@ export default function RegisterPage() {
                           name="confirmPassword"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-700 font-medium">Confirm Password</FormLabel>
+                              <FormLabel className="text-gray-700 font-medium">Confirme a senha</FormLabel>
                               <FormControl>
                                 <div className="relative">
                                   <Input
                                     type={showConfirmPassword ? 'text' : 'password'}
-                                    placeholder="Confirm your password"
+                                    placeholder="Confirme a senha"
                                     className="h-12 border-gray-200 focus:border-teal-500 focus:ring-teal-500 pr-12"
                                     {...field}
                                     disabled={isLoading}
@@ -326,12 +326,12 @@ export default function RegisterPage() {
                           {isLoading ? (
                             <>
                               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                              Creating Account...
+                              Criando a conta...
                             </>
                           ) : (
                             <>
                               <UserPlus className="mr-2 h-5 w-5" />
-                              SUBMIT
+                              Criar
                             </>
                           )}
                         </Button>
@@ -340,9 +340,9 @@ export default function RegisterPage() {
 
                     <div className="text-center pt-4 border-t border-gray-200">
                       <p className="text-sm text-gray-600">
-                        Already have an account?{' '}
+                        Já tem uma conta?{' '}
                         <Link href="/login" className="text-teal-600 hover:text-teal-700 font-medium">
-                          Sign in here
+                          Entre aqui
                         </Link>
                       </p>
                     </div>
