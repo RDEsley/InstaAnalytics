@@ -85,7 +85,7 @@ export const processApifyData = (data: any[]): AnalysisResult => {
     fullName: profileData.fullName || profileData.name || '',
     biography: profileData.biography || profileData.bio || '',
     followersCount: parseInt(String(profileData.followersCount || 0), 10),
-    followingCount: parseInt(String(profileData.followingCount || 0), 10),
+    followingCount: parseInt(String(profileData.followsCount || 0), 10),
     postsCount: parseInt(String(profileData.postsCount || 0), 10),
     profilePicUrl: profileData.profilePicUrl || profileData.profilePic || '',
     isPrivate: Boolean(profileData.isPrivate),
