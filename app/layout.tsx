@@ -5,7 +5,7 @@ import { Inter } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Analisador de Perfil do Instagram',
+  title: 'IA - InstaAnalytics',
   description: 'Analise perfis do Instagram para métricas de engajamento e insights de performance',
 };
 
