@@ -94,6 +94,16 @@ npm run dev
 
 Acesse: **http://localhost:3000**
 
+### Deploy no Vercel
+
+1. Conecte o repositório ao [Vercel](https://vercel.com)
+2. Configure as variáveis de ambiente (Supabase URL/Key, APIFY_TOKEN)
+3. No **Supabase** (Auth → URL Configuration):
+   - **Site URL**: `https://seu-projeto.vercel.app`
+   - **Redirect URLs**: adicione `https://seu-projeto.vercel.app/**`
+
+**Email rate limit:** O Supabase gratuito envia ~4 emails/hora. Para produção, use SMTP próprio em Supabase (Settings → Auth → SMTP).
+
 ---
 
 ## 📂 Estrutura do Projeto

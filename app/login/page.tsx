@@ -41,10 +41,15 @@ export default function LoginPage() {
       const { data: authData, error: authError } = await signIn(data.email, data.password);
 
       if (authError) {
-        if (authError.message.includes('Invalid login credentials')) {
+        const msg = authError.message.toLowerCase();
+        if (msg.includes('invalid login credentials')) {
           setError('Email ou senha incorretos');
-        } else if (authError.message.includes('Email not confirmed')) {
+        } else if (msg.includes('email not confirmed')) {
           setError('Por favor, confirme seu email antes de fazer login');
+        } else if (msg.includes('email rate limit') || msg.includes('rate limit exceeded')) {
+          setError(
+            'Limite de envio de emails atingido. Aguarde 1 hora ou configure SMTP personalizado no Supabase. Tente novamente mais tarde.'
+          );
         } else {
           setError(authError.message);
         }
