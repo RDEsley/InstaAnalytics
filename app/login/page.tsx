@@ -213,7 +213,7 @@ export default function LoginPage() {
                             <Checkbox
                               id="remember"
                               checked={rememberMe}
-                              onCheckedChange={setRememberMe}
+                              onCheckedChange={(checked) => setRememberMe(checked === true)}
                               className="border-gray-300"
                             />
                             <label

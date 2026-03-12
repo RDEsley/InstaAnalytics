@@ -1,16 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
-import { User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('https://')
+  ? process.env.NEXT_PUBLIC_SUPABASE_URL
+  : undefined) || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key-for-build';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export interface AuthUser extends User {
-  user_metadata?: {
-    full_name?: string;
-  };
-}
+export type AuthUser = User;
 
 // Sign up with email and password
 export const signUp = async (email: string, password: string, fullName: string) => {

@@ -24,8 +24,14 @@ export const startApifyRun = async (username: string) => {
     const run = await apifyClient.actor(ACTOR_ID).call(inputPayload);
     console.log('→ Run iniciado com ID:', run.id);
     return run;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Erro ao iniciar run do Apify:', error);
+    const msg = error instanceof Error ? error.message : String(error);
+    if (
+      /insufficient credits|credit|quota|402|APIFY_TOKEN|invalid token|authentication failed|free tier|limit exceeded/i.test(msg)
+    ) {
+      throw new Error('APIFY_CREDITS_ERROR');
+    }
     throw new Error('Falha ao iniciar análise do perfil');
   }
 };

@@ -83,7 +83,7 @@
 
 /* Background Images for All Pages */
 .page-background {
-  background-image: url('');
+  background-image: none;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
