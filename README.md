@@ -163,9 +163,6 @@ Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) par
 
 [![Richard GitHub](https://img.shields.io/badge/Richard_GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/RDEsley)
 [![Fernanda GitHub](https://img.shields.io/badge/Fernanda_GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/FeMeNiKi)
-[![Portfólio Richard](https://img.shields.io/badge/Portfólio_Richard-25D366?style=for-the-badge&logo=vercel&logoColor=white)](https://certificates-richard-oliveira.vercel.app)
-
-*Desenvolvido com ❤️ pela equipe **RockRedHat***
 
 </div>
 
