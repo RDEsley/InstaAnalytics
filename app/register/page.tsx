@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { registerSchema, RegisterFormData } from '@/lib/validationAuth';
-import { signUp } from '@/lib/auth';
+import { signUp, signOut } from '@/lib/auth';
 import AuthGuard from '@/components/AuthGuard';
 
 export default function RegisterPage() {
@@ -63,6 +63,7 @@ export default function RegisterPage() {
       }
 
       if (authData.user) {
+        await signOut();
         setSuccess(true);
         setTimeout(() => {
           router.push('/login');
