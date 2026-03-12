@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, Zap, Check } from 'lucide-react';
+import { AlertCircle, Zap, Check, Info } from 'lucide-react';
 
 import InstagramForm from '@/components/InstagramForm';
 import LoadingIndicator from '@/components/LoadingIndicator';
@@ -134,6 +134,14 @@ export default function Home() {
                           Digite um nome de usuário do Instagram para obter análises detalhadas e insights
                         </p>
                       </div>
+
+                      {/* Prototype Notice */}
+                      <Alert className="border-amber-200 bg-amber-50 text-amber-900 [&>svg]:text-amber-600">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          <strong>Projeto em fase de testes.</strong> Este protótipo utiliza a versão gratuita do Apify, com tokens limitados e poucos usos por mês. A análise pode não funcionar quando os créditos estiverem esgotados.
+                        </AlertDescription>
+                      </Alert>
 
                       {/* Search Form */}
                       <InstagramForm 

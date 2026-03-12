@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { registerSchema, RegisterFormData } from '@/lib/validationAuth';
-import { signUp } from '@/lib/auth';
+import { signUp, signOut } from '@/lib/auth';
 import AuthGuard from '@/components/AuthGuard';
 
 export default function RegisterPage() {
@@ -47,10 +47,15 @@ export default function RegisterPage() {
       );
 
       if (authError) {
-        if (authError.message.includes('User already registered')) {
+        const msg = authError.message.toLowerCase();
+        if (msg.includes('user already registered')) {
           setError('Este email já está cadastrado');
-        } else if (authError.message.includes('Password should be at least')) {
+        } else if (msg.includes('password should be at least')) {
           setError('A senha deve ter pelo menos 6 caracteres');
+        } else if (msg.includes('email rate limit') || msg.includes('rate limit exceeded')) {
+          setError(
+            'Limite de envio de emails atingido. Aguarde 1 hora ou configure SMTP personalizado no Supabase. Tente novamente mais tarde.'
+          );
         } else {
           setError(authError.message);
         }
@@ -58,6 +63,7 @@ export default function RegisterPage() {
       }
 
       if (authData.user) {
+        await signOut();
         setSuccess(true);
         setTimeout(() => {
           router.push('/login');

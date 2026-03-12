@@ -12,6 +12,13 @@ export type AuthUser = User;
 
 // Sign up with email and password
 export const signUp = async (email: string, password: string, fullName: string) => {
+  const redirectTo =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/login`
+      : process.env.NEXT_PUBLIC_APP_URL
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/login`
+        : undefined;
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -19,6 +26,7 @@ export const signUp = async (email: string, password: string, fullName: string) 
       data: {
         full_name: fullName,
       },
+      ...(redirectTo && { emailRedirectTo: redirectTo }),
     },
   });
 
