@@ -51,6 +51,12 @@ CREATE POLICY "Users can insert own search history"
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
+CREATE POLICY "Users can delete own search history"
+  ON search_history
+  FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
 -- Create indexes for performance if they don't exist
 CREATE INDEX IF NOT EXISTS idx_search_history_username ON search_history(username);
 CREATE INDEX IF NOT EXISTS idx_search_history_timestamp ON search_history(timestamp DESC);

@@ -108,6 +108,13 @@ CREATE POLICY "Allow insert and update to profiles"
   TO authenticated
   WITH CHECK (true);
 
+CREATE POLICY "Allow update to profiles"
+  ON profiles
+  FOR UPDATE
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
 -- Create policies for posts
 CREATE POLICY "Allow read access to all posts"
   ON posts
@@ -121,6 +128,13 @@ CREATE POLICY "Allow insert and update to posts"
   TO authenticated
   WITH CHECK (true);
 
+CREATE POLICY "Allow update to posts"
+  ON posts
+  FOR UPDATE
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
 -- Create policies for engagement_metrics
 CREATE POLICY "Allow read access to all engagement metrics"
   ON engagement_metrics
@@ -132,6 +146,13 @@ CREATE POLICY "Allow insert and update to engagement metrics"
   ON engagement_metrics
   FOR INSERT
   TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Allow update to engagement metrics"
+  ON engagement_metrics
+  FOR UPDATE
+  TO authenticated
+  USING (true)
   WITH CHECK (true);
 
 -- Create indexes for performance

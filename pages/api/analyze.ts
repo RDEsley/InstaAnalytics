@@ -76,8 +76,15 @@ export default async function handler(
       errorMessage = 'A análise demorou mais que o esperado. Tente novamente em alguns minutos.';
       statusCode = 504;
     } else if (errorMsg.includes('rate limit')) {
-        errorMessage = 'Muitas tentativas. Aguarde um momento antes de tentar novamente.';
-        statusCode = 429;
+      errorMessage = 'Muitas tentativas. Aguarde um momento antes de tentar novamente.';
+      statusCode = 429;
+    } else if (
+      errorMsg.includes('apify_credits_error') ||
+      /credit|quota|402|insufficient|api.?key|token.*invalid/i.test(errorMsg)
+    ) {
+      errorMessage =
+        'Os créditos da API do Apify acabaram ou a chave é inválida. Entre em contato com o administrador ou tente novamente mais tarde.';
+      statusCode = 503;
     }
     
     return res.status(statusCode).json({

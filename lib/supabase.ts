@@ -2,8 +2,10 @@ import { createClient } from '@supabase/supabase-js';
 import { AnalysisResult, InstagramProfile, InstagramPost, EngagementMetrics, SearchHistoryEntry, SearchHistoryFilters } from './types';
 import { Database } from './database.types';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('https://')
+  ? process.env.NEXT_PUBLIC_SUPABASE_URL
+  : undefined) || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key-for-build';
 
 // Create Supabase client with proper typing
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
