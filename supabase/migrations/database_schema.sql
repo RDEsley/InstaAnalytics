@@ -159,3 +159,63 @@ CREATE POLICY "Allow update to engagement metrics"
 CREATE INDEX IF NOT EXISTS idx_posts_profile_id ON posts(profile_id);
 CREATE INDEX IF NOT EXISTS idx_engagement_metrics_profile_id ON engagement_metrics(profile_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_username ON profiles(username);
+
+
+-- Schema SQL Original
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.engagement_metrics (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  profile_id uuid NOT NULL UNIQUE,
+  engagement_rate numeric NOT NULL DEFAULT 0,
+  posting_frequency numeric NOT NULL DEFAULT 0,
+  average_likes numeric NOT NULL DEFAULT 0,
+  average_comments numeric NOT NULL DEFAULT 0,
+  best_performing_post_id text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT engagement_metrics_pkey PRIMARY KEY (id),
+  CONSTRAINT engagement_metrics_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.posts (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  profile_id uuid NOT NULL,
+  post_id text NOT NULL UNIQUE,
+  caption text,
+  likes_count integer NOT NULL DEFAULT 0,
+  comments_count integer NOT NULL DEFAULT 0,
+  timestamp timestamp with time zone,
+  url text,
+  media_type text,
+  media_url text,
+  location_name text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT posts_pkey PRIMARY KEY (id),
+  CONSTRAINT posts_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  username text NOT NULL UNIQUE,
+  full_name text,
+  biography text,
+  follower_count integer NOT NULL DEFAULT 0,
+  following_count integer NOT NULL DEFAULT 0,
+  posts_count integer NOT NULL DEFAULT 0,
+  profile_pic_url text,
+  is_private boolean DEFAULT false,
+  is_verified boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.search_history (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  username text NOT NULL,
+  result jsonb,
+  status text NOT NULL DEFAULT 'success'::text,
+  error_message text,
+  timestamp timestamp with time zone DEFAULT now(),
+  user_id uuid,
+  CONSTRAINT search_history_pkey PRIMARY KEY (id),
+  CONSTRAINT search_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
