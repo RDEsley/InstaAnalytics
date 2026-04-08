@@ -139,9 +139,24 @@ export const processApifyData = (data: any[]): AnalysisResult => {
 
   const postingFrequency = posts.length > 0 ? (posts.length / 30) * 30 : 0;
 
-  const bestPerformingPost = posts.length > 0 
-    ? posts.reduce((best, current) => 
+  const bestPostByLikes = posts.length > 0
+    ? posts.reduce((best, current) =>
         current.likesCount > best.likesCount ? current : best
+      )
+    : undefined;
+
+  const bestPostByComments = posts.length > 0
+    ? posts.reduce((best, current) =>
+        current.commentsCount > best.commentsCount ? current : best
+      )
+    : undefined;
+
+  const bestPostByEngagement = posts.length > 0
+    ? posts.reduce((best, current) =>
+        (current.likesCount + current.commentsCount) >
+        (best.likesCount + best.commentsCount)
+          ? current
+          : best
       )
     : undefined;
 
@@ -150,7 +165,10 @@ export const processApifyData = (data: any[]): AnalysisResult => {
     postingFrequency: Math.round(postingFrequency * 100) / 100,
     averageLikes: Math.round(averageLikes),
     averageComments: Math.round(averageComments),
-    bestPerformingPost,
+    bestPerformingPost: bestPostByLikes,
+    bestPostByLikes,
+    bestPostByComments,
+    bestPostByEngagement,
   };
 
   return {

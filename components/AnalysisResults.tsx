@@ -206,60 +206,99 @@ export default function AnalysisResults({ data, onReset }: AnalysisResultsProps)
             transition={{ duration: 0.3 }}
             className="space-y-6"
           >
-            {/* Best Performing Post */}
-            {engagementMetrics.bestPerformingPost && (
+            {/* Best Posts */}
+            {(engagementMetrics.bestPostByLikes ||
+              engagementMetrics.bestPostByComments ||
+              engagementMetrics.bestPostByEngagement ||
+              engagementMetrics.bestPerformingPost) && (
               <Card className="bg-white/90 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg">Post com Melhor Performance</CardTitle>
-                  <CardDescription>Post com maior número de curtidas</CardDescription>
+                  <CardTitle className="text-lg">Melhores Posts</CardTitle>
+                  <CardDescription>Por curtidas, comentários e engajamento total</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    {engagementMetrics.bestPerformingPost.mediaUrl && (
-                      <div className="rounded-md overflow-hidden h-40 w-full sm:w-40 bg-muted flex items-center justify-center">
-                        <img 
-                          src={engagementMetrics.bestPerformingPost.mediaUrl} 
-                          alt="Post com melhor performance" 
-                          className="object-cover h-full w-full"
-                          onError={(e) => {
-                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${profile.username}&background=random`;
-                          }}
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <p className="text-sm line-clamp-3 mb-2">
-                        {engagementMetrics.bestPerformingPost.caption || "Sem legenda"}
-                      </p>
-                      <div className="flex gap-4">
-                        <div className="flex items-center gap-1">
-                          <Heart className="h-4 w-4 text-red-500" />
-                          <span>{engagementMetrics.bestPerformingPost.likesCount.toLocaleString('pt-BR')}</span>
+                <CardContent className="space-y-6">
+                  {[
+                    {
+                      title: 'Mais curtidas',
+                      post: engagementMetrics.bestPostByLikes || engagementMetrics.bestPerformingPost,
+                      subtitle: 'Post com maior número de curtidas',
+                    },
+                    {
+                      title: 'Mais comentários',
+                      post: engagementMetrics.bestPostByComments,
+                      subtitle: 'Post com maior número de comentários',
+                    },
+                    {
+                      title: 'Maior engajamento total',
+                      post: engagementMetrics.bestPostByEngagement,
+                      subtitle: 'Curtidas + comentários',
+                    },
+                  ]
+                    .filter((x) => Boolean(x.post))
+                    .map(({ title, post, subtitle }) => {
+                      if (!post) return null;
+                      const total = post.likesCount + post.commentsCount;
+                      return (
+                        <div key={title} className="space-y-2">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <div>
+                              <p className="font-semibold">{title}</p>
+                              <p className="text-xs text-muted-foreground">{subtitle}</p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(post.url, '_blank')}
+                            >
+                              Abrir
+                              <ArrowUpRight className="ml-2 h-4 w-4" />
+                            </Button>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            {post.mediaUrl && (
+                              <div className="rounded-md overflow-hidden h-40 w-full sm:w-40 bg-muted flex items-center justify-center">
+                                <img
+                                  src={post.mediaUrl}
+                                  alt={`Post: ${title}`}
+                                  className="object-cover h-full w-full"
+                                  onError={(e) => {
+                                    e.currentTarget.src = `https://ui-avatars.com/api/?name=${profile.username}&background=random`;
+                                  }}
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <p className="text-sm line-clamp-3 mb-2">
+                                {post.caption || 'Sem legenda'}
+                              </p>
+                              <div className="flex flex-wrap gap-4">
+                                <div className="flex items-center gap-1">
+                                  <Heart className="h-4 w-4 text-red-500" />
+                                  <span>{post.likesCount.toLocaleString('pt-BR')}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <MessageCircle className="h-4 w-4 text-blue-500" />
+                                  <span>{post.commentsCount.toLocaleString('pt-BR')}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-muted-foreground">
+                                  <span className="text-xs">Total:</span>
+                                  <span className="text-sm font-medium">{total.toLocaleString('pt-BR')}</span>
+                                </div>
+                              </div>
+                              {post.locationName && (
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  📍 {post.locationName}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <Separator />
                         </div>
-                        <div className="flex items-center gap-1">
-                          <MessageCircle className="h-4 w-4 text-blue-500" />
-                          <span>{engagementMetrics.bestPerformingPost.commentsCount.toLocaleString('pt-BR')}</span>
-                        </div>
-                      </div>
-                      {engagementMetrics.bestPerformingPost.locationName && (
-                        <p className="text-xs text-muted-foreground mt-2">
-                          📍 {engagementMetrics.bestPerformingPost.locationName}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                      );
+                    })}
                 </CardContent>
-                <CardFooter className="border-t pt-4">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full" 
-                    onClick={() => window.open(engagementMetrics.bestPerformingPost?.url, '_blank')}
-                  >
-                    Visualizar no Instagram
-                    <ArrowUpRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardFooter>
               </Card>
             )}
             

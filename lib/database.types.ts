@@ -106,6 +106,9 @@ export interface Database {
           average_likes: number
           average_comments: number
           best_performing_post_id: string | null
+          best_post_by_likes_id: string | null
+          best_post_by_comments_id: string | null
+          best_post_by_engagement_id: string | null
           created_at: string | null
         }
         Insert: {
@@ -116,6 +119,9 @@ export interface Database {
           average_likes?: number
           average_comments?: number
           best_performing_post_id?: string | null
+          best_post_by_likes_id?: string | null
+          best_post_by_comments_id?: string | null
+          best_post_by_engagement_id?: string | null
           created_at?: string | null
         }
         Update: {
@@ -126,6 +132,9 @@ export interface Database {
           average_likes?: number
           average_comments?: number
           best_performing_post_id?: string | null
+          best_post_by_likes_id?: string | null
+          best_post_by_comments_id?: string | null
+          best_post_by_engagement_id?: string | null
           created_at?: string | null
         }
       }

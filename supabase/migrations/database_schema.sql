@@ -86,9 +86,20 @@ CREATE TABLE IF NOT EXISTS engagement_metrics (
   average_likes decimal NOT NULL DEFAULT 0,
   average_comments decimal NOT NULL DEFAULT 0,
   best_performing_post_id text,
+  best_post_by_likes_id text,
+  best_post_by_comments_id text,
+  best_post_by_engagement_id text,
   created_at timestamptz DEFAULT now(),
   UNIQUE(profile_id)
 );
+
+-- If the table already exists (older deploy), add missing columns
+ALTER TABLE IF EXISTS engagement_metrics
+  ADD COLUMN IF NOT EXISTS best_post_by_likes_id text;
+ALTER TABLE IF EXISTS engagement_metrics
+  ADD COLUMN IF NOT EXISTS best_post_by_comments_id text;
+ALTER TABLE IF EXISTS engagement_metrics
+  ADD COLUMN IF NOT EXISTS best_post_by_engagement_id text;
 
 -- Create search_history table
 CREATE TABLE IF NOT EXISTS search_history (

@@ -86,7 +86,25 @@ export const getAnalysisFromCache = async (username: string): Promise<AnalysisRe
       postingFrequency: metricsData.posting_frequency,
       averageLikes: metricsData.average_likes,
       averageComments: metricsData.average_comments,
+      // Back-compat: posts are ordered by likes desc.
       bestPerformingPost: posts.length > 0 ? posts[0] : undefined,
+      bestPostByLikes:
+        posts.find(p => p.id === (metricsData as any).best_post_by_likes_id) ||
+        (posts.length > 0 ? posts[0] : undefined),
+      bestPostByComments:
+        posts.find(p => p.id === (metricsData as any).best_post_by_comments_id) ||
+        (posts.length > 0
+          ? posts.reduce((best, cur) => (cur.commentsCount > best.commentsCount ? cur : best), posts[0])
+          : undefined),
+      bestPostByEngagement:
+        posts.find(p => p.id === (metricsData as any).best_post_by_engagement_id) ||
+        (posts.length > 0
+          ? posts.reduce(
+              (best, cur) =>
+                cur.likesCount + cur.commentsCount > best.likesCount + best.commentsCount ? cur : best,
+              posts[0]
+            )
+          : undefined),
     };
     
     return {
@@ -174,6 +192,9 @@ export const storeAnalysisResults = async (analysis: AnalysisResult, accessToken
         average_likes: analysis.engagementMetrics.averageLikes,
         average_comments: analysis.engagementMetrics.averageComments,
         best_performing_post_id: analysis.engagementMetrics.bestPerformingPost?.id,
+        best_post_by_likes_id: analysis.engagementMetrics.bestPostByLikes?.id,
+        best_post_by_comments_id: analysis.engagementMetrics.bestPostByComments?.id,
+        best_post_by_engagement_id: analysis.engagementMetrics.bestPostByEngagement?.id,
       }, { onConflict: 'profile_id' });
     
     if (metricsError) {
