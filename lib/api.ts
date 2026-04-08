@@ -1,12 +1,13 @@
 import { ApiResponse, FormData } from './types';
 
 // Function to call our internal API endpoint
-export const analyzeInstagramProfile = async (data: FormData): Promise<ApiResponse> => {
+export const analyzeInstagramProfile = async (data: FormData, accessToken?: string): Promise<ApiResponse> => {
   try {
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
       body: JSON.stringify(data),
     });

@@ -18,7 +18,7 @@ import { getSearchHistory, clearSearchHistory, storeFailedSearch } from '@/lib/s
 import { useAuth } from '@/hooks/useAuth';
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [startTime, setStartTime] = useState(0);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -139,7 +139,7 @@ export default function Home() {
                       <Alert className="border-amber-200 bg-amber-50 text-amber-900 [&>svg]:text-amber-600">
                         <Info className="h-4 w-4" />
                         <AlertDescription>
-                          <strong>Projeto em fase de testes.</strong> Este protótipo utiliza a versão gratuita do Apify, com tokens limitados e poucos usos por mês. A análise pode não funcionar quando os créditos estiverem esgotados.
+                          <strong>Projeto em fase de testes.</strong> O perfil precisa ser <strong>público</strong> (não privado) para a análise funcionar. Este protótipo utiliza a versão gratuita do Apify, com tokens limitados e poucos usos por mês. A análise pode não funcionar quando os créditos estiverem esgotados.
                         </AlertDescription>
                       </Alert>
 
@@ -148,6 +148,7 @@ export default function Home() {
                         onAnalysisStart={handleAnalysisStart}
                         onAnalysisComplete={handleAnalysisComplete}
                         onError={handleError}
+                        accessToken={session?.access_token}
                       />
 
                       {/* Error Alert */}

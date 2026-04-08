@@ -18,12 +18,14 @@ interface InstagramFormProps {
   onAnalysisStart: () => void;
   onAnalysisComplete: (data: any) => void;
   onError: (error: string) => void;
+  accessToken?: string;
 }
 
 export default function InstagramForm({
   onAnalysisStart,
   onAnalysisComplete,
-  onError
+  onError,
+  accessToken
 }: InstagramFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,7 +43,7 @@ export default function InstagramForm({
       setIsLoading(true);
       onAnalysisStart();
       
-      const response = await analyzeInstagramProfile(data);
+      const response = await analyzeInstagramProfile(data, accessToken);
       
       if (response.success && response.data) {
         onAnalysisComplete(response.data);
