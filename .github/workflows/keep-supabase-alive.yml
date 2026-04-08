@@ -12,6 +12,30 @@ jobs:
     steps:
       - name: Ping Supabase
         run: |
-          curl -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/profiles?select=id&limit=1" \
-          -H "apikey: ${{ secrets.SUPABASE_KEY }}" \
-          -H "Authorization: Bearer ${{ secrets.SUPABASE_KEY }}"
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "Missing SUPABASE_URL or SUPABASE_ANON_KEY secrets."
+            exit 1
+          fi
+
+          # Optional secret for reusing this workflow in other projects.
+          # Example: "/rest/v1/racas?select=raca_id&limit=1"
+          # If not provided, defaults to a lightweight GET on "racas".
+          ping_path="${SUPABASE_PING_PATH:-/rest/v1/racas?select=raca_id&limit=1}"
+          ping_path="${ping_path#/}" # prevent double slashes
+          url="${SUPABASE_URL%/}/${ping_path}"
+          echo "Pinging: ${url}"
+
+          # Fail on non-2xx, retry transient errors, and print useful logs
+          curl -sS -f \
+            --retry 3 --retry-delay 2 --retry-all-errors \
+            --connect-timeout 10 --max-time 20 \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Accept: application/json" \
+            "${url}"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_PING_PATH: ${{ secrets.SUPABASE_PING_PATH }}
