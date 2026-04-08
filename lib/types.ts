@@ -29,7 +29,14 @@ export interface EngagementMetrics {
   postingFrequency: number;
   averageLikes: number;
   averageComments: number;
+  /**
+   * Back-compat: historically this meant "post com mais curtidas".
+   * Kept to avoid breaking UI/DB consumers.
+   */
   bestPerformingPost?: InstagramPost;
+  bestPostByLikes?: InstagramPost;
+  bestPostByComments?: InstagramPost;
+  bestPostByEngagement?: InstagramPost; // likes + comments
 }
 
 export interface AnalysisResult {
