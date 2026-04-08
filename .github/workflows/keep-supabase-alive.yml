@@ -2,7 +2,9 @@ name: Keep Supabase Alive
 
 on:
   schedule:
-    - cron: "0 0 */6 * *" # roda a cada 6 dias
+    # Supabase pausa projetos (free) após ~7 dias sem tráfego.
+    # Rodar a cada 6 dias é suficiente; ajuste se preferir mais frequência.
+    - cron: "0 0 */6 * *" # a cada 6 dias
   workflow_dispatch:
 
 jobs:
@@ -14,28 +16,43 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
-            echo "Missing SUPABASE_URL or SUPABASE_ANON_KEY secrets."
+          if [ -z "${SUPABASE_URL:-}" ]; then
+            echo "Missing SUPABASE_URL secret."
+            exit 1
+          fi
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ] && [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "Missing SUPABASE_SERVICE_ROLE_KEY (recommended) or SUPABASE_ANON_KEY secret."
             exit 1
           fi
 
-          # Optional secret for reusing this workflow in other projects.
-          # Example: "/rest/v1/racas?select=raca_id&limit=1"
-          # If not provided, defaults to a lightweight GET on "racas".
-          ping_path="${SUPABASE_PING_PATH:-/rest/v1/racas?select=raca_id&limit=1}"
+          # Defaults are portable: query a tiny row from a known table.
+          # You can override via repository Variables or Secrets.
+          # - SUPABASE_PING_TABLE (default: profiles)
+          # - SUPABASE_PING_SELECT (default: id)
+          # - SUPABASE_PING_PATH (optional: full path override, ex "/rest/v1/xyz?select=*&limit=1")
+          table="${SUPABASE_PING_TABLE:-profiles}"
+          select_cols="${SUPABASE_PING_SELECT:-id}"
+          ping_path_default="/rest/v1/${table}?select=${select_cols}&limit=1"
+          ping_path="${SUPABASE_PING_PATH:-$ping_path_default}"
           ping_path="${ping_path#/}" # prevent double slashes
           url="${SUPABASE_URL%/}/${ping_path}"
+
+          # Prefer service role for reliability (RLS can block anon SELECT).
+          key="${SUPABASE_SERVICE_ROLE_KEY:-${SUPABASE_ANON_KEY}}"
           echo "Pinging: ${url}"
 
           # Fail on non-2xx, retry transient errors, and print useful logs
           curl -sS -f \
             --retry 3 --retry-delay 2 --retry-all-errors \
             --connect-timeout 10 --max-time 20 \
-            -H "apikey: ${SUPABASE_ANON_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "apikey: ${key}" \
+            -H "Authorization: Bearer ${key}" \
             -H "Accept: application/json" \
             "${url}"
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SUPABASE_PING_PATH: ${{ secrets.SUPABASE_PING_PATH }}
+          SUPABASE_PING_TABLE: ${{ vars.SUPABASE_PING_TABLE }}
+          SUPABASE_PING_SELECT: ${{ vars.SUPABASE_PING_SELECT }}
