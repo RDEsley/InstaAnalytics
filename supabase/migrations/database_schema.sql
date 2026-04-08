@@ -90,10 +90,22 @@ CREATE TABLE IF NOT EXISTS engagement_metrics (
   UNIQUE(profile_id)
 );
 
+-- Create search_history table
+CREATE TABLE IF NOT EXISTS search_history (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  username text NOT NULL,
+  result jsonb,
+  status text NOT NULL DEFAULT 'success',
+  error_message text,
+  timestamp timestamptz DEFAULT now(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL
+);
+
 -- Enable Row Level Security
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE engagement_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE search_history ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for profiles
 CREATE POLICY "Allow read access to all profiles"
@@ -155,10 +167,30 @@ CREATE POLICY "Allow update to engagement metrics"
   USING (true)
   WITH CHECK (true);
 
+-- Create policies for search_history (private per user)
+CREATE POLICY "Allow users to read their own search history"
+  ON search_history
+  FOR SELECT
+  TO authenticated
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Allow users to insert their own search history"
+  ON search_history
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Allow users to delete their own search history"
+  ON search_history
+  FOR DELETE
+  TO authenticated
+  USING (user_id = auth.uid());
+
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_posts_profile_id ON posts(profile_id);
 CREATE INDEX IF NOT EXISTS idx_engagement_metrics_profile_id ON engagement_metrics(profile_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_username ON profiles(username);
+CREATE INDEX IF NOT EXISTS idx_search_history_user_id_timestamp ON search_history(user_id, timestamp DESC);
 
 
 -- Schema SQL Original

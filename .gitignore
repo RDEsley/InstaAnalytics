@@ -50,6 +50,11 @@ Thumbs.db
 # Vercel
 .vercel
 
+# Supabase (local dev artifacts)
+supabase/.temp/
+supabase/.branches/
+supabase/.cache/
+
 # TypeScript
 *.tsbuildinfo
 

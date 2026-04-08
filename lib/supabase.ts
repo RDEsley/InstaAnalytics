@@ -7,8 +7,16 @@ const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('https://'
   : undefined) || 'https://placeholder.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key-for-build';
 
-// Create Supabase client with proper typing
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+function createAuthedClient(accessToken?: string) {
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    },
+  });
+}
+
+// Create Supabase client with proper typing (browser usage)
+export const supabase = createAuthedClient();
 
 // Check if analysis exists in cache
 export const getAnalysisFromCache = async (username: string): Promise<AnalysisResult | null> => {
@@ -94,17 +102,20 @@ export const getAnalysisFromCache = async (username: string): Promise<AnalysisRe
 };
 
 // Store analysis results in Supabase
-export const storeAnalysisResults = async (analysis: AnalysisResult): Promise<boolean> => {
+export const storeAnalysisResults = async (analysis: AnalysisResult, accessToken?: string): Promise<boolean> => {
   try {
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+    const client = createAuthedClient(accessToken);
+
+    const { data: { user } } = accessToken
+      ? await client.auth.getUser(accessToken)
+      : await client.auth.getUser();
     if (!user) {
       console.error('User not authenticated');
       return false;
     }
 
     // Start by inserting the profile
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await client
       .from('profiles')
       .upsert({
         username: analysis.profile.username.toLowerCase(),
@@ -143,7 +154,7 @@ export const storeAnalysisResults = async (analysis: AnalysisResult): Promise<bo
         location_name: post.locationName,
       }));
       
-      const { error: postsError } = await supabase
+      const { error: postsError } = await client
         .from('posts')
         .upsert(formattedPosts, { onConflict: 'post_id' });
       
@@ -154,7 +165,7 @@ export const storeAnalysisResults = async (analysis: AnalysisResult): Promise<bo
     }
     
     // Insert engagement metrics
-    const { error: metricsError } = await supabase
+    const { error: metricsError } = await client
       .from('engagement_metrics')
       .upsert({
         profile_id: profileId,
@@ -171,7 +182,7 @@ export const storeAnalysisResults = async (analysis: AnalysisResult): Promise<bo
     }
 
     // Store search history entry with user_id
-    const { error: historyError } = await supabase
+    const { error: historyError } = await client
       .from('search_history')
       .insert({
         username: analysis.profile.username.toLowerCase(),
@@ -195,7 +206,6 @@ export const storeAnalysisResults = async (analysis: AnalysisResult): Promise<bo
 // Store failed search in history
 export const storeFailedSearch = async (username: string, errorMessage: string): Promise<boolean> => {
   try {
-    // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       console.error('User not authenticated');

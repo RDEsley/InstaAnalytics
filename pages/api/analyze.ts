@@ -52,7 +52,9 @@ export default async function handler(
     const apifyData = await waitForApifyRun(run.id);
     const analysisResult = processApifyData(apifyData);
     
-    await storeAnalysisResults(analysisResult);
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : undefined;
+    await storeAnalysisResults(analysisResult, token);
     
     return res.status(200).json({
       success: true,
