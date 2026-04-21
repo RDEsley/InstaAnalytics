@@ -25,8 +25,23 @@ jobs:
             exit 1
           fi
 
-          # Defaults are portable: query a tiny row from a known table.
-          # You can override via repository Variables or Secrets.
+          # Goal: generate traffic so the free project doesn't pause.
+          # The ping must be "robust": some projects don't have a `profiles` table,
+          # and RLS can block anon SELECT. We'll treat any HTTP response as success
+          # (even 401/404), because the request still generates traffic.
+
+          # Prefer service role for reliability (RLS can block anon SELECT).
+          key="${SUPABASE_SERVICE_ROLE_KEY:-${SUPABASE_ANON_KEY}}"
+
+          # 1) Stable health endpoint (doesn't require auth). Good "is it up?" check.
+          health_url="${SUPABASE_URL%/}/auth/v1/health"
+          echo "Pinging health: ${health_url}"
+          curl -sS \
+            --retry 3 --retry-delay 2 --retry-all-errors \
+            --connect-timeout 10 --max-time 20 \
+            "${health_url}" >/dev/null
+
+          # 2) PostgREST ping (overrideable), but don't fail on non-2xx.
           # - SUPABASE_PING_TABLE (default: profiles)
           # - SUPABASE_PING_SELECT (default: id)
           # - SUPABASE_PING_PATH (optional: full path override, ex "/rest/v1/xyz?select=*&limit=1")
@@ -35,20 +50,29 @@ jobs:
           ping_path_default="/rest/v1/${table}?select=${select_cols}&limit=1"
           ping_path="${SUPABASE_PING_PATH:-$ping_path_default}"
           ping_path="${ping_path#/}" # prevent double slashes
-          url="${SUPABASE_URL%/}/${ping_path}"
+          rest_url="${SUPABASE_URL%/}/${ping_path}"
+          echo "Pinging rest: ${rest_url}"
 
-          # Prefer service role for reliability (RLS can block anon SELECT).
-          key="${SUPABASE_SERVICE_ROLE_KEY:-${SUPABASE_ANON_KEY}}"
-          echo "Pinging: ${url}"
+          http_code="$(
+            curl -sS -o /dev/null -w "%{http_code}" \
+              --retry 3 --retry-delay 2 --retry-all-errors \
+              --connect-timeout 10 --max-time 20 \
+              -H "apikey: ${key}" \
+              -H "Authorization: Bearer ${key}" \
+              -H "Accept: application/json" \
+              "${rest_url}" || true
+          )"
 
-          # Fail on non-2xx, retry transient errors, and print useful logs
-          curl -sS -f \
-            --retry 3 --retry-delay 2 --retry-all-errors \
-            --connect-timeout 10 --max-time 20 \
-            -H "apikey: ${key}" \
-            -H "Authorization: Bearer ${key}" \
-            -H "Accept: application/json" \
-            "${url}"
+          if [ -z "${http_code}" ] || [ "${http_code}" = "000" ]; then
+            echo "REST ping failed to get an HTTP response."
+            exit 1
+          fi
+
+          if [ "${http_code}" -ge 400 ]; then
+            echo "REST ping returned HTTP ${http_code} (non-fatal; still counted as traffic)."
+          else
+            echo "REST ping returned HTTP ${http_code}."
+          fi
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
