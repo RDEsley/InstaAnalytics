@@ -2,80 +2,112 @@ name: Keep Supabase Alive
 
 on:
   schedule:
-    # Daily at 00:00 UTC (GitHub Actions cron; delays up to ~1h are possible).
-    - cron: "0 0 * * *"
+    # GitHub cron uses UTC. Runs at 00:23, 06:23, 12:23 and 18:23 in Brasília (UTC-3).
+    # Avoid minute 00 because scheduled Actions can be delayed or dropped during peak load.
+    - cron: "23 3,9,15,21 * * *"
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-supabase-alive
+  cancel-in-progress: false
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_PING_PATH: ${{ secrets.SUPABASE_PING_PATH }}
+      SUPABASE_PING_TABLE: ${{ vars.SUPABASE_PING_TABLE }}
+      SUPABASE_PING_SELECT: ${{ vars.SUPABASE_PING_SELECT }}
 
     steps:
-      - name: Ping Supabase
+      - name: Validate configuration
         run: |
           set -euo pipefail
 
-          if [ -z "${SUPABASE_URL:-}" ]; then
-            echo "Missing SUPABASE_URL secret."
+          test -n "${SUPABASE_URL:-}" || {
+            echo "::error::SUPABASE_URL is not configured."
             exit 1
-          fi
+          }
+
           if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ] && [ -z "${SUPABASE_ANON_KEY:-}" ]; then
-            echo "Missing SUPABASE_SERVICE_ROLE_KEY (recommended) or SUPABASE_ANON_KEY secret."
+            echo "::error::Configure SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY."
             exit 1
           fi
 
-          # Goal: generate traffic so the free project doesn't pause.
-          # The ping must be "robust": some projects don't have a `profiles` table,
-          # and RLS can block anon SELECT. We'll treat any HTTP response as success
-          # (even 401/404), because the request still generates traffic.
+      - name: Query Supabase database
+        run: |
+          set -euo pipefail
 
-          # Prefer service role for reliability (RLS can block anon SELECT).
-          key="${SUPABASE_SERVICE_ROLE_KEY:-${SUPABASE_ANON_KEY}}"
-
-          # 1) Stable health endpoint (doesn't require auth). Good "is it up?" check.
-          health_url="${SUPABASE_URL%/}/auth/v1/health"
-          echo "Pinging health: ${health_url}"
-          curl -sS \
-            --retry 3 --retry-delay 2 --retry-all-errors \
-            --connect-timeout 10 --max-time 20 \
-            "${health_url}" >/dev/null
-
-          # 2) PostgREST ping (overrideable), but don't fail on non-2xx.
-          # - SUPABASE_PING_TABLE (default: profiles)
-          # - SUPABASE_PING_SELECT (default: id)
-          # - SUPABASE_PING_PATH (optional: full path override, ex "/rest/v1/xyz?select=*&limit=1")
+          base_url="${SUPABASE_URL%/}"
           table="${SUPABASE_PING_TABLE:-profiles}"
           select_cols="${SUPABASE_PING_SELECT:-id}"
-          ping_path_default="/rest/v1/${table}?select=${select_cols}&limit=1"
-          ping_path="${SUPABASE_PING_PATH:-$ping_path_default}"
-          ping_path="${ping_path#/}" # prevent double slashes
-          rest_url="${SUPABASE_URL%/}/${ping_path}"
-          echo "Pinging rest: ${rest_url}"
+          default_path="rest/v1/${table}?select=${select_cols}&limit=1"
+          ping_path="${SUPABASE_PING_PATH:-${default_path}}"
+          ping_path="${ping_path#/}"
+          endpoint="${base_url}/${ping_path}"
 
-          http_code="$(
-            curl -sS -o /dev/null -w "%{http_code}" \
-              --retry 3 --retry-delay 2 --retry-all-errors \
-              --connect-timeout 10 --max-time 20 \
-              -H "apikey: ${key}" \
-              -H "Authorization: Bearer ${key}" \
-              -H "Accept: application/json" \
-              "${rest_url}" || true
-          )"
+          # Prefer the service role when it is already configured so RLS cannot turn
+          # this maintenance query into a false negative. Otherwise use the anon key.
+          key="${SUPABASE_SERVICE_ROLE_KEY:-${SUPABASE_ANON_KEY}}"
+          response_file="$(mktemp)"
 
-          if [ -z "${http_code}" ] || [ "${http_code}" = "000" ]; then
-            echo "REST ping failed to get an HTTP response."
+          cleanup() {
+            rm -f "${response_file}"
+          }
+          trap cleanup EXIT
+
+          set +e
+          http_status=$(curl \
+            --silent \
+            --show-error \
+            --fail-with-body \
+            --retry 3 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            --connect-timeout 15 \
+            --max-time 45 \
+            --output "${response_file}" \
+            --write-out '%{http_code}' \
+            -H "apikey: ${key}" \
+            -H "Authorization: Bearer ${key}" \
+            -H 'Accept: application/json' \
+            -H 'Cache-Control: no-cache' \
+            -H 'User-Agent: instaanalytics-supabase-keep-alive' \
+            "${endpoint}")
+          curl_exit=$?
+          set -e
+
+          if [ "${curl_exit}" -ne 0 ]; then
+            echo "::error::Supabase query failed (curl exit ${curl_exit}, HTTP ${http_status:-000})."
+            if [ -s "${response_file}" ]; then
+              echo 'Supabase response:'
+              cat "${response_file}"
+            fi
             exit 1
           fi
 
-          if [ "${http_code}" -ge 400 ]; then
-            echo "REST ping returned HTTP ${http_code} (non-fatal; still counted as traffic)."
-          else
-            echo "REST ping returned HTTP ${http_code}."
+          if [[ ! "${http_status}" =~ ^2[0-9][0-9]$ ]]; then
+            echo "::error::Supabase returned HTTP ${http_status}."
+            if [ -s "${response_file}" ]; then
+              echo 'Supabase response:'
+              cat "${response_file}"
+            fi
+            exit 1
           fi
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_PING_PATH: ${{ secrets.SUPABASE_PING_PATH }}
-          SUPABASE_PING_TABLE: ${{ vars.SUPABASE_PING_TABLE }}
-          SUPABASE_PING_SELECT: ${{ vars.SUPABASE_PING_SELECT }}
+
+          echo "Real database query completed successfully (HTTP ${http_status})."
+
+      - name: Failure diagnostics
+        if: failure()
+        run: |
+          set -u
+          host=$(echo "${SUPABASE_URL}" | cut -d/ -f3)
+          echo "Host: ${host}"
+          nslookup "${host}" || true
